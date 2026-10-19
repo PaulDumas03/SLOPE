@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SLOPE Calculator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+<style>
+:root{
+  --bg:#f1f4f3; --panel:#ffffff; --ink:#14212b; --muted:#566872; --line:#cfd9d7;
+  --accent:#0f6b66; --accent-ink:#ffffff; --gold:#a8741a; --warn:#a33b2c;
+  --font:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1719; --panel:#142226; --ink:#e6efed; --muted:#9bb0ae; --line:#2a3c3f;
+    --accent:#4fc3b8; --accent-ink:#06201d; --gold:#e0b455; --warn:#ff8a78; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1719; --panel:#142226; --ink:#e6efed; --muted:#9bb0ae; --line:#2a3c3f;
+  --accent:#4fc3b8; --accent-ink:#06201d; --gold:#e0b455; --warn:#ff8a78; color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.5;-webkit-text-size-adjust:100%}
+main{max-width:1020px;margin:0 auto;padding:32px 20px 56px}
+h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.05;margin:0 0 8px;font-weight:800;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:56ch;margin:0 0 28px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:780px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
+fieldset{border:0;margin:0 0 18px;padding:0}
+legend,label.l{font-weight:600;font-size:.95rem;margin-bottom:6px;display:block;padding:0}
+.hint{color:var(--muted);font-size:.85rem;margin:4px 0 0}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+select,input[type=number]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px;min-width:0}
+select{flex:1 1 110px} input[type=number]{flex:1 1 90px}
+select:focus-visible,input:focus-visible,.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg label{flex:1;position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;inset:0}
+.seg span{display:block;text-align:center;padding:9px 6px;font-size:.92rem;border-left:1px solid var(--line)}
+.seg label:first-child span{border-left:0}
+.seg input:checked+span{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.result .big{font-size:clamp(2rem,6vw,3rem);font-weight:800;letter-spacing:-.02em;line-height:1.1;margin:0}
+.result .sub{color:var(--muted);margin:2px 0 22px}
+.track{position:relative;height:64px;margin:8px 8px 26px}
+.track::before{content:"";position:absolute;left:0;right:0;top:30px;height:2px;background:var(--line)}
+.mk{position:absolute;top:0;transform:translateX(-50%);text-align:center;font-size:.75rem;color:var(--muted);white-space:nowrap}
+.mk i{display:block;width:12px;height:12px;border-radius:50%;margin:24px auto 4px;background:var(--muted)}
+.mk.slope{color:var(--ink);font-weight:600}.mk.slope i{background:var(--accent);width:18px;height:18px;margin:21px auto 3px}
+.mk.peak i{background:var(--gold)}
+.mk.lo{transform:translateX(-10%)}.mk.hi{transform:translateX(-90%)}
+dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:8px 16px;font-size:.95rem}
+dt{color:var(--muted)} dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.neg{color:var(--warn)}
+.note{margin-top:16px;padding:10px 12px;border-left:3px solid var(--gold);background:var(--bg);font-size:.9rem;border-radius:0 6px 6px 0}
+.err{color:var(--warn);font-size:.9rem;margin-top:10px}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 24px}
+.tabs button{font:inherit;font-weight:600;color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;margin-bottom:-1px;cursor:pointer}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:inherit;font-weight:600;background:var(--accent);color:var(--accent-ink);border:0;border-radius:6px;padding:10px 16px;cursor:pointer;margin-top:18px}
+.btn[hidden]{display:none}
+.msg{font-size:.88rem;color:var(--muted);margin:8px 0 0;min-height:1.2em}
+#rows{display:grid;gap:14px}
+.nm{font:inherit;font-weight:600;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px;width:100%;margin-bottom:14px}
+.pgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.pgrid .span2{grid-column:span 2}
+.pgrid select,.pgrid input[type=number]{width:100%;flex:none}
+.pgrid .row select,.pgrid .row input{flex:1 1 70px;width:auto}
+@media (max-width:780px){.pgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.pgrid .span2{grid-column:span 2}}
+.pres{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:1.05rem}
+.pres span,.pres.muted{color:var(--muted);font-size:.92rem}
+.team{margin-bottom:14px;font-weight:600}
+</style>
+</head>
+<body>
+<main>
+  <h1>SLOPE calculator</h1>
+  <p class="lede">Estimate your Standardized Level Of Play for WTL events. Results update as you type.</p>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="t-single" aria-selected="true" aria-controls="tab-single" type="button">Single player</button>
+    <button role="tab" id="t-multi" aria-selected="false" aria-controls="tab-multi" type="button" tabindex="-1">5 players</button>
+  </div>
+  <div id="tab-single" role="tabpanel" aria-labelledby="t-single">
+  <div class="grid">
+    <form class="panel" id="f" onsubmit="return false" autocomplete="off">
+      <fieldset>
+        <label class="l" for="pname">Player name (optional, shown on the PNG)</label>
+        <input id="pname" type="text" maxlength="40" style="width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px">
+      </fieldset>
+      <fieldset>
+        <legend>Division</legend>
+        <div class="seg" role="radiogroup" aria-label="Division">
+          <label><input type="radio" name="div" value="1" checked><span>Division 1</span></label>
+          <label><input type="radio" name="div" value="2"><span>Division 2</span></label>
+          <label><input type="radio" name="div" value="3"><span>Division 3</span></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Current rank</legend>
+        <div class="row">
+          <select id="cT" aria-label="Current tier"></select>
+          <select id="cD" aria-label="Current division"></select>
+          <input id="cL" type="number" min="0" step="1" value="150" aria-label="Current LP">
+        </div>
+        <p class="hint" id="cH">Ranked solo/duo, at the time you apply. Master and above: enter total LP.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Ranked solo/duo games in 2026</legend>
+        <input id="z" type="number" min="0" step="1" value="600" style="width:100%" aria-label="Games played in 2026">
+      </fieldset>
+      <fieldset>
+        <legend id="pLeg">Peak rank in 2026</legend>
+        <div class="row">
+          <select id="pT" aria-label="Peak tier"></select>
+          <select id="pD" aria-label="Peak division"></select>
+          <input id="pL" type="number" min="0" step="1" value="400" aria-label="Peak LP">
+        </div>
+        <p class="hint" id="pH">With 200 or more games, your 2026 peak is used.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Games on your main champion (%)</legend>
+        <input id="a" type="number" min="0" max="100" step="1" value="75" style="width:100%" aria-label="Percent of games on main champion">
+        <p class="hint">Below 50% there is no one-trick penalty.</p>
+      </fieldset>
+      <fieldset style="margin-bottom:0">
+        <legend>Role you will play</legend>
+        <div class="seg" role="radiogroup" aria-label="Role status">
+          <label><input type="radio" name="role" value="on" checked><span>Main role</span></label>
+          <label><input type="radio" name="role" value="secondary"><span>Secondary</span></label>
+          <label><input type="radio" name="role" value="off"><span>Off-role</span></label>
+        </div>
+      </fieldset>
+      <div class="err" id="err" role="alert"></div>
+    </form>
+
+    <section class="panel result" aria-live="polite">
+      <p class="big" id="rank">–</p>
+      <p class="sub" id="lp">–</p>
+      <div class="track" id="track"></div>
+      <dl id="bd"></dl>
+      <div class="note" id="note" hidden></div>
+      <button class="btn" id="dl" type="button" hidden>Download as PNG</button>
+      <p class="msg" id="dlmsg" aria-live="polite"></p>
+    </section>
+  </div>
+  </div>
+  <div id="tab-multi" role="tabpanel" aria-labelledby="t-multi" hidden>
+    <p class="team" id="team"></p>
+    <div id="rows"></div>
+    <button class="btn" id="dlm" type="button" hidden>Download team as PNG</button>
+    <p class="msg" id="dlmmsg" aria-live="polite"></p>
+  </div>
+</main>
+
+<script>
+const TIERS=["Iron","Bronze","Silver","Gold","Platinum","Emerald","Diamond","Master","Grandmaster","Challenger"];
+const MASTER=7, K=Math.log(0.7)/Math.log(0.75), LOW_OTP_Q=0;
+const ROLE_B={on:0,secondary:0.5,off:1};
+const ROLE_LABEL={on:"Main role",secondary:"Secondary role",off:"Off-role"};
+const $=id=>document.getElementById(id);
+
+function rankToLp(t,d,lp){ if(t>=MASTER) return lp; return -400*(MASTER-1-t)-100*d+lp; }
+function lpToRank(v){
+  if(v>=0) return "Master+ "+Math.round(v)+" LP";
+  const steps=Math.ceil(-v/100), idx=(MASTER-1)-Math.floor((steps-1)/4), div=(steps-1)%4+1;
+  if(idx<0) return "Below Iron 4";
+  return TIERS[idx]+" "+div+" · "+Math.round(v+100*steps)+" LP";
+}
+function qOfA(a){ if(a<0.5) return LOW_OTP_Q; return 2*Math.pow(a,4*(K-1)*a+3-2*K)-1; }
+function slope(div,x,y,z,a,role){
+  const q=qOfA(a), b=ROLE_B[role];
+  if(z<200) return {value:y,q,b,w:null,base:y,otp:0,rolePen:0,combo:0};
+  const w=150/z+0.25, base=x+(y-x)*w;
+  let otp,rolePen,combo=0;
+  if(div===1){otp=300*q;rolePen=400*b;combo=300*q*b;}
+  else if(div===2){otp=150*q;rolePen=200*b;}
+  else {otp=100*q;rolePen=100*b;}
+  return {value:base-otp-rolePen-combo,q,b,w,base,otp,rolePen,combo};
+}
+const fmt=n=>(n>0?"+":n<0?"−":"")+Math.abs(Math.round(n*10)/10)+" LP";
+const peakText=z=>z<200?"Peak rank since January 2025":"Peak rank in 2026";
+
+function fillTiers(t,d){
+  t.innerHTML=TIERS.map((n,i)=>`<option value="${i}">${n}</option>`).join("");
+  d.innerHTML=[4,3,2,1].map(n=>`<option value="${n}">${n}</option>`).join("");
+  t.value=MASTER;
+}
+function readRankEls(t,d,l){
+  const tt=+t.value, apex=tt>=MASTER;
+  d.style.display=apex?"none":""; l.max=apex?"":"99";
+  const lp=parseInt(l.value,10);
+  if(isNaN(lp)||lp<0||(!apex&&lp>99)) return null;
+  return rankToLp(tt,+d.value,lp);
+}
+function breakdown(div,x,y,r){
+  const rows=[["Current rank",lpToRank(x)],["Peak rank used",lpToRank(y)]];
+  if(r.w!==null){
+    rows.push(["Peak weight",(r.w*100).toFixed(1)+"%"],["Blend of current and peak",fmt(r.base).replace("+","")],
+      ["One-trick penalty (q = "+r.q.toFixed(3)+")",fmt(-r.otp)],["Role penalty",fmt(-r.rolePen)]);
+    if(div===1) rows.push(["One-trick and role combined",fmt(-r.combo)]);
+  }
+  rows.push(["SLOPE",lpToRank(r.value)]);
+  return rows;
+}
+
+/* ---------- Single player ---------- */
+let last=null;
+function update(){
+  const err=$("err"); err.textContent="";
+  const z=parseInt($("z").value,10), aPct=parseFloat($("a").value);
+  const x=readRankEls($("cT"),$("cD"),$("cL")), y=readRankEls($("pT"),$("pD"),$("pL"));
+  const small=z<200;
+  $("pLeg").textContent=peakText(z);
+  $("pH").textContent=small?"Under 200 games, your peak since January 2025 is used.":"With 200 or more games, your 2026 peak is used.";
+  if(x===null||y===null){err.textContent="Check your LP: it must be 0–99 below Master, and 0 or more in Master and above.";return;}
+  if(isNaN(z)||z<0){err.textContent="Enter the number of ranked solo/duo games you played in 2026.";return;}
+  if(isNaN(aPct)||aPct<0||aPct>100){err.textContent="Enter a main-champion percentage between 0 and 100.";return;}
+  const div=+document.querySelector('input[name=div]:checked').value;
+  const role=document.querySelector('input[name=role]:checked').value;
+  const r=slope(div,x,y,z,aPct/100,role);
+  $("rank").textContent=lpToRank(r.value);
+  $("lp").textContent=Math.round(r.value*10)/10+" LP on the Master = 0 scale";
+  const vals=[x,y,r.value], lo=Math.min(...vals)-80, hi=Math.max(...vals)+80, span=hi-lo;
+  const items=[[x,"cur","Current"],[y,"peak","Peak"],[r.value,"slope","SLOPE"]];
+  $("track").innerHTML=items.map(([v,c,l])=>{const p=(v-lo)/span*100,e=p<12?" lo":p>88?" hi":"";
+    return `<div class="mk ${c}${e}" style="left:${p}%"><span>${l}</span><i></i></div>`;}).join("");
+  const rows=breakdown(div,x,y,r);
+  $("bd").innerHTML=rows.map(([k,v])=>`<dt>${k}</dt><dd class="${v.startsWith("−")&&/penalty|combined/.test(k)?"neg":""}">${v}</dd>`).join("");
+  const n=$("note"); n.hidden=!small;
+  n.textContent=small?"With fewer than 200 games, SLOPE equals your peak rank. Champion and role adjustments do not apply.":"";
+  last={rows,items,lo,hi,rank:lpToRank(r.value),lp:$("lp").textContent,
+    meta:[["Division","Division "+div],["Games in 2026",String(z)],["Main champion",aPct+"%"],["Role",ROLE_LABEL[role]]]};
+}
+
+/* ---------- PNG export ---------- */
+async function makePng(){
+  const cs=getComputedStyle(document.documentElement), v=n=>cs.getPropertyValue(n).trim();
+  const fam='"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif';
+  try{await document.fonts.load('800 60px "Bricolage Grotesque"');await document.fonts.load('400 24px "Bricolage Grotesque"');}catch(e){}
+  const W=1080,P=56,name=$("pname").value.trim(),rows=last.meta.concat(last.rows);
+  const top=P+(name?150:100), trackH=150, rowH=42, H=top+120+trackH+rows.length*rowH+110;
+  const c=document.createElement("canvas"); c.width=W*2; c.height=H*2;
+  const g=c.getContext("2d"); g.scale(2,2);
+  g.fillStyle=v("--bg"); g.fillRect(0,0,W,H);
+  g.fillStyle=v("--panel"); g.strokeStyle=v("--line"); g.lineWidth=2;
+  g.beginPath(); g.roundRect(24,24,W-48,H-48,18); g.fill(); g.stroke();
+  let y=P+30; g.textBaseline="alphabetic";
+  g.fillStyle=v("--muted"); g.font=`600 26px ${fam}`; g.fillText("SLOPE evaluation",P,y);
+  if(name){y+=52;g.fillStyle=v("--ink");g.font=`600 36px ${fam}`;g.fillText(name,P,y);}
+  y+=76; g.fillStyle=v("--ink"); g.font=`800 64px ${fam}`; g.fillText(last.rank,P,y);
+  y+=40; g.fillStyle=v("--muted"); g.font=`400 26px ${fam}`; g.fillText(last.lp,P,y);
+  // track
+  const x0=P+30,x1=W-P-30,ty=y+70;
+  g.strokeStyle=v("--line"); g.lineWidth=3; g.beginPath(); g.moveTo(x0,ty); g.lineTo(x1,ty); g.stroke();
+  const pts=last.items.map(([val,cls,label])=>({x:x0+(val-last.lo)/(last.hi-last.lo)*(x1-x0),cls,label})).sort((a,b)=>a.x-b.x);
+  pts.forEach((pt,i)=>{ pt.lv=(i&&pt.x-pts[i-1].x<130)?pts[i-1].lv+1:0; });
+  pts.forEach(pt=>{
+    const big=pt.cls==="slope";
+    g.fillStyle=pt.cls==="slope"?v("--accent"):pt.cls==="peak"?v("--gold"):v("--muted");
+    g.beginPath(); g.arc(pt.x,ty,big?11:8,0,Math.PI*2); g.fill();
+    g.fillStyle=big?v("--ink"):v("--muted"); g.font=`${big?600:400} 22px ${fam}`;
+    g.textAlign=pt.x<x0+50?"left":pt.x>x1-50?"right":"center";
+    g.fillText(pt.label,pt.x,ty+38+pt.lv*26);
+  });
+  g.textAlign="left"; y=ty+trackH-30;
+  // rows
+  g.font=`400 24px ${fam}`;
+  rows.forEach(([k,val],i)=>{
+    if(i===last.meta.length){ g.strokeStyle=v("--line"); g.lineWidth=2; g.beginPath(); g.moveTo(P,y-26);g.lineTo(W-P,y-26);g.stroke(); }
+    const strong=k==="SLOPE";
+    g.fillStyle=v("--muted"); g.font=`${strong?600:400} 24px ${fam}`; g.textAlign="left"; g.fillText(k,P,y);
+    g.fillStyle=strong?v("--ink"):(/penalty|combined/.test(k)&&val.startsWith("−")?v("--warn"):v("--ink"));
+    g.textAlign="right"; g.fillText(val,W-P,y); y+=rowH;
+  });
+  g.textAlign="left"; g.fillStyle=v("--muted"); g.font=`400 20px ${fam}`;
+  g.fillText("Generated "+new Date().toLocaleDateString(),P,H-P);
+  return new Promise(res=>c.toBlob(res,"image/png"));
+}
+async function makeMultiPng(){
+  const cs=getComputedStyle(document.documentElement), v=n=>cs.getPropertyValue(n).trim();
+  const fam='"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif';
+  try{await document.fonts.load('800 60px "Bricolage Grotesque"');await document.fonts.load('400 24px "Bricolage Grotesque"');}catch(e){}
+  const W=1080,P=56,cardH=150,gap=16,list=lastMulti,head=P+120,H=head+list.length*(cardH+gap)+80;
+  const c=document.createElement("canvas"); c.width=W*2; c.height=H*2;
+  const g=c.getContext("2d"); g.scale(2,2); g.textBaseline="alphabetic";
+  g.fillStyle=v("--bg"); g.fillRect(0,0,W,H);
+  const avg=list.reduce((s,p)=>s+p.lp,0)/list.length;
+  g.fillStyle=v("--muted"); g.font=`600 26px ${fam}`; g.fillText("SLOPE team evaluation",P,P+20);
+  g.fillStyle=v("--ink"); g.font=`800 44px ${fam}`; g.fillText("Average: "+lpToRank(avg),P,P+76);
+  list.forEach((p,i)=>{
+    const y=head+i*(cardH+gap), x=P, w=W-2*P;
+    g.fillStyle=v("--panel"); g.strokeStyle=v("--line"); g.lineWidth=2;
+    g.beginPath(); g.roundRect(x,y,w,cardH,14); g.fill(); g.stroke();
+    g.fillStyle=v("--accent"); g.beginPath(); g.roundRect(x,y,8,cardH,[14,0,0,14]); g.fill();
+    g.textAlign="left"; g.fillStyle=v("--ink"); g.font=`600 30px ${fam}`; g.fillText(p.name,x+32,y+46);
+    g.textAlign="right"; g.font=`800 32px ${fam}`; g.fillText(p.rank,x+w-28,y+46);
+    g.fillStyle=v("--muted"); g.font=`400 22px ${fam}`; g.fillText(p.lp+" LP"+(p.small?" · peak used":""),x+w-28,y+78);
+    g.textAlign="left"; g.fillText(p.detail,x+32,y+84);
+    g.fillText("Current "+p.cur+"   ·   "+p.peakLabel+" "+p.peak,x+32,y+122);
+  });
+  g.textAlign="left"; g.fillStyle=v("--muted"); g.font=`400 20px ${fam}`;
+  g.fillText("Generated "+new Date().toLocaleDateString(),P,H-P+12);
+  return new Promise(res=>c.toBlob(res,"image/png"));
+}
+async function setupDownload(){
+  let dl=null; try{dl=await claude.use("downloads");}catch(e){}
+  if(!dl) return;
+  const mb=$("dlm"), mm=$("dlmmsg"); mb.hidden=false;
+  mb.addEventListener("click",async()=>{
+    if(!lastMulti.length){mm.textContent="Complete at least one player first.";return;}
+    mm.textContent="";
+    try{ await dl.save({filename:"slope-team.png",data:await makeMultiPng()}); mm.textContent="Saved."; }
+    catch(e){ mm.textContent=e&&e.code==="declined"?"Download cancelled.":"Couldn’t save the PNG here. Try again or use a screenshot."; }
+  });
+  const btn=$("dl"), msg=$("dlmsg"); btn.hidden=false;
+  btn.addEventListener("click",async()=>{
+    if(!last){msg.textContent="Fix the highlighted input first.";return;}
+    msg.textContent="";
+    try{
+      const blob=await makePng();
+      const safe=($("pname").value.trim()||"result").replace(/[^\w\-]+/g,"_").slice(0,30);
+      await dl.save({filename:"slope-"+safe+".png",data:blob});
+      msg.textContent="Saved.";
+    }catch(e){ msg.textContent=e&&e.code==="declined"?"Download cancelled.":"Couldn’t save the PNG here. Try again or use a screenshot."; }
+  });
+}
+
+/* ---------- 5 players ---------- */
+const rowHtml=i=>`<section class="panel prow" aria-label="Player ${i+1}">
+  <input class="nm" type="text" maxlength="40" placeholder="Player ${i+1} name (optional)" aria-label="Player ${i+1} name">
+  <div class="pgrid">
+    <div><label class="l">Division</label><select class="dv"><option value="1">Division 1</option><option value="2">Division 2</option><option value="3">Division 3</option></select></div>
+    <div><label class="l">Games in 2026</label><input class="zz" type="number" min="0" step="1"></div>
+    <div><label class="l">Main champion %</label><input class="aa" type="number" min="0" max="100" step="1"></div>
+    <div><label class="l">Role</label><select class="rl"><option value="on">Main role</option><option value="secondary">Secondary</option><option value="off">Off-role</option></select></div>
+    <div class="span2"><label class="l">Current rank</label><div class="row"><select class="cT"></select><select class="cD"></select><input class="cL" type="number" min="0" step="1" value="0"></div></div>
+    <div class="span2"><label class="l pl">Peak rank in 2026</label><div class="row"><select class="pT"></select><select class="pD"></select><input class="pL" type="number" min="0" step="1" value="0"></div></div>
+  </div>
+  <div class="pres muted">Enter games and main-champion % to see a result.</div>
+</section>`;
+let lastMulti=[];
+function updateMulti(){
+  lastMulti=[]; const vals=[];
+  document.querySelectorAll(".prow").forEach((row,i)=>{
+    const q=s=>row.querySelector(s), out=q(".pres");
+    const z=parseInt(q(".zz").value,10), aP=parseFloat(q(".aa").value);
+    const x=readRankEls(q(".cT"),q(".cD"),q(".cL")), y=readRankEls(q(".pT"),q(".pD"),q(".pL"));
+    q(".pl").textContent=peakText(isNaN(z)?200:z);
+    if(isNaN(z)||z<0||isNaN(aP)||aP<0||aP>100){out.className="pres muted";out.textContent="Enter games and main-champion % to see a result.";return;}
+    if(x===null||y===null){out.className="pres muted";out.textContent="Check LP: 0–99 below Master, 0 or more in Master and above.";return;}
+    const r=slope(+q(".dv").value,x,y,z,aP/100,q(".rl").value);
+    out.className="pres"; out.innerHTML=`<strong>${lpToRank(r.value)}</strong><span>${Math.round(r.value)} LP${z<200?" · under 200 games, peak used":""}</span>`;
+    vals.push(r.value);
+    lastMulti.push({name:q(".nm").value.trim()||"Player "+(i+1),rank:lpToRank(r.value),lp:Math.round(r.value),
+      detail:`Division ${q(".dv").value} · ${z} games · ${aP}% main champion · ${ROLE_LABEL[q(".rl").value]}`,
+      cur:lpToRank(x),peak:lpToRank(y),peakLabel:z<200?"Peak (since Jan 2025)":"Peak (2026)",small:z<200});
+  });
+  $("team").textContent=vals.length?`Average SLOPE of ${vals.length} player${vals.length>1?"s":""}: ${lpToRank(vals.reduce((a,b)=>a+b,0)/vals.length)}`:"";
+}
+function buildMulti(){
+  $("rows").innerHTML=[0,1,2,3,4].map(rowHtml).join("");
+  document.querySelectorAll(".prow").forEach(r=>{fillTiers(r.querySelector(".cT"),r.querySelector(".cD"));fillTiers(r.querySelector(".pT"),r.querySelector(".pD"));});
+  $("rows").addEventListener("input",updateMulti); $("rows").addEventListener("change",updateMulti);
+  updateMulti();
+}
+
+/* ---------- Tabs & init ---------- */
+function showTab(id){
+  ["single","multi"].forEach(n=>{
+    $("tab-"+n).hidden=n!==id; const b=$("t-"+n);
+    b.setAttribute("aria-selected",String(n===id)); b.tabIndex=n===id?0:-1;
+  });
+}
+$("t-single").onclick=()=>showTab("single");
+$("t-multi").onclick=()=>showTab("multi");
+fillTiers($("cT"),$("cD")); fillTiers($("pT"),$("pD"));
+$("f").addEventListener("input",update);
+update(); buildMulti(); setupDownload();
+</script>
+</body>
+</html>
